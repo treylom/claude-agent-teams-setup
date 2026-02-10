@@ -279,27 +279,51 @@ Step 9 완료 후, Part 2 선택 기능 안내로 진행합니다.
 
 ## Part 2: Optional Features (선택)
 
-Core Setup 완료 후, 추가 기능을 설정할지 사용자에게 물어봅니다.
+Core Setup 완료 후, 추가 기능을 **복수선택지(multiSelect)** 로 한 번에 물어봅니다.
 
 **CRITICAL**: 사용자가 dontAsk/bypassPermissions 모드를 사용 중이면, Part 2 전체를 건너뛰고 완료 메시지를 표시하세요.
+
+### 선택지 제시 (AskUserQuestion - multiSelect: true)
+
+AskUserQuestion을 **multiSelect: true**로 호출하여 원하는 기능을 복수 선택할 수 있게 합니다:
+
+```json
+{
+  "questions": [{
+    "question": "추가로 설정할 기능을 선택해주세요. 필요한 것만 골라주세요.",
+    "header": "Optional",
+    "multiSelect": true,
+    "options": [
+      {
+        "label": "프로젝트 복제 (git clone)",
+        "description": "기존 git 저장소를 WSL에 clone하여 Windows의 .claude/ 설정(agents, skills 등)을 가져옵니다"
+      },
+      {
+        "label": "ai()/ain() 편의 함수",
+        "description": "ai 한 단어로 tmux + Claude Code를 시작하는 bash 함수를 ~/.bashrc에 추가합니다"
+      },
+      {
+        "label": "ai()/ain() + auto-push",
+        "description": "위 편의 함수에 추가로, Claude Code 종료 시 자동 git push (add→commit→pull→push)를 실행합니다"
+      },
+      {
+        "label": "Windows 자동 동기화",
+        "description": "Task Scheduler로 30분마다 git pull+push를 실행하여 WSL↔Windows 간 파일을 자동 동기화합니다"
+      }
+    ]
+  }]
+}
+```
+
+사용자가 아무것도 선택하지 않으면(또는 "Other"로 "없음" 입력 시) Part 2를 건너뛰고 최종 완료 메시지로 이동합니다.
 
 ---
 
 ### Option A: 기존 프로젝트 복제 (git clone)
 
-사용자에게 AskUserQuestion으로 확인:
+**"프로젝트 복제" 선택 시 실행:**
 
-```
-[선택 기능 A] 기존 프로젝트를 WSL에 복제하시겠습니까?
-
-Windows에서 사용하던 Claude Code 프로젝트(설정, 코드 등)를
-WSL Ubuntu에 git clone으로 가져올 수 있습니다.
-
-→ "예" - git clone할 저장소 URL을 알려주세요
-→ "아니오" - 건너뛰기 (나중에 수동으로 가능)
-```
-
-**사용자가 "예"를 선택한 경우:**
+사용자에게 저장소 URL 확인:
 
 ```
 git clone할 저장소 URL을 알려주세요.
@@ -332,44 +356,15 @@ wsl -d Ubuntu -- bash -c "git config --global user.name '{이름}' && git config
 
 ### Option B: ai()/ain() 편의 함수 설치
 
-사용자에게 AskUserQuestion으로 확인:
-
-```
-[선택 기능 B] 편의 함수(ai/ain)를 설치하시겠습니까?
-
-이 함수를 설치하면:
-- ai 명령어: tmux + Claude Code를 한 번에 시작
-- ain <이름>: 이름 지정 세션 시작
-
-매번 tmux → cd → claude를 입력하지 않아도 됩니다.
-
-→ "예" - 편의 함수 설치
-→ "아니오" - 건너뛰기
-```
-
-**사용자가 "예"를 선택한 경우:**
-
-추가로 auto-push 기능 확인:
-
-```
-Claude Code 종료 시 자동으로 git push를 실행하시겠습니까?
-
-이 기능은 Claude Code를 /exit으로 종료할 때:
-git add → commit → pull --rebase → push를 자동 실행합니다.
-
-WSL과 GitHub 간 코드를 자동 동기화하는 데 유용합니다.
-
-→ "예" - auto-push 활성화
-→ "아니오" - auto-push 없이 기본 함수만 설치
-```
+**"ai()/ain() 편의 함수" 또는 "ai()/ain() + auto-push" 선택 시 실행:**
 
 `scripts/setup-bashrc.sh`를 WSL에서 실행:
 
 ```bash
-# auto-push 없이 설치
+# "ai()/ain() 편의 함수" 선택 시 (auto-push 없음)
 wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프로젝트경로}"
 
-# auto-push 포함 설치
+# "ai()/ain() + auto-push" 선택 시
 wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프로젝트경로}" --with-auto-push
 ```
 
@@ -378,27 +373,13 @@ wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프�
 wsl -d Ubuntu -- bash -c "source ~/.bashrc && type ai 2>/dev/null && echo 'ai() 함수 확인됨'"
 ```
 
+> 참고: "ai()/ain() + auto-push"를 선택하면 "ai()/ain() 편의 함수"는 자동 포함됩니다. 둘 다 선택할 필요 없습니다.
+
 ---
 
 ### Option C: Windows 자동 동기화 (Task Scheduler)
 
-사용자에게 AskUserQuestion으로 확인:
-
-```
-[선택 기능 C] Windows 자동 동기화를 설정하시겠습니까?
-
-이 기능은 Windows에서 매 30분마다 자동으로:
-- git pull: WSL에서 push한 변경사항을 Windows로 가져오기
-- git push: Windows에서 변경된 파일을 GitHub에 push
-
-WSL과 Windows 양쪽에서 같은 프로젝트를 작업할 때 유용합니다.
-(Task Scheduler에 자동 작업이 등록됩니다)
-
-→ "예" - 자동 동기화 설정
-→ "아니오" - 건너뛰기
-```
-
-**사용자가 "예"를 선택한 경우:**
+**"Windows 자동 동기화" 선택 시 실행:**
 
 Windows에서의 프로젝트 경로 확인:
 ```
