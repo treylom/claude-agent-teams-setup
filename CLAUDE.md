@@ -260,13 +260,27 @@ wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm
 ```
 [Step 6/9] Claude Code 인증이 필요합니다.
 
-WSL Ubuntu 터미널을 열고 아래 명령어를 실행해주세요:
+WSL Ubuntu 터미널을 열고 아래 순서대로 진행해주세요:
+
+1. Ubuntu 터미널에서 아래 명령어를 입력하고 Enter:
 
    claude auth login
 
-선택지가 나타나면 1번 옵션을 선택하세요.
-브라우저가 열리면 Anthropic 계정으로 로그인하세요.
-인증이 완료되면 "완료"라고 알려주세요.
+2. 선택지가 나타나면 → 1번 옵션을 선택하세요 (키보드 1 또는 Enter)
+
+3. 이후 두 가지 경우가 있습니다:
+
+   [경우 A] 브라우저가 자동으로 열리는 경우:
+   → Anthropic 계정으로 로그인하세요
+   → "인증 완료" 메시지가 나오면 성공입니다
+
+   [경우 B] 브라우저가 자동으로 안 열리는 경우:
+   → 터미널에 URL이 표시됩니다 (https://... 형태)
+   → 그 URL을 마우스로 드래그하여 복사하세요 (Ctrl+Shift+C)
+   → Windows 브라우저(Chrome, Edge 등)를 열고 주소창에 붙여넣기(Ctrl+V) 후 Enter
+   → Anthropic 계정으로 로그인하세요
+
+4. 인증이 완료되면 "완료"라고 알려주세요
 
 (Ubuntu 터미널 여는 법: 시작 메뉴에서 "Ubuntu" 검색 후 클릭)
 ```
