@@ -296,19 +296,19 @@ AskUserQuestion을 **multiSelect: true**로 호출하여 원하는 기능을 복
     "options": [
       {
         "label": "프로젝트 복제 (git clone)",
-        "description": "기존 git 저장소를 WSL에 clone하여 Windows의 .claude/ 설정(agents, skills 등)을 가져옵니다"
+        "description": "기존 git 저장소를 WSL Ubuntu에 clone합니다. Windows에서 사용하던 .claude/ 설정(agents, skills, commands), CLAUDE.md, 코드 등을 그대로 WSL에서 사용할 수 있습니다. 이미 Claude Code 프로젝트가 있는 분에게 권장합니다."
       },
       {
         "label": "ai()/ain() 편의 함수",
-        "description": "ai 한 단어로 tmux + Claude Code를 시작하는 bash 함수를 ~/.bashrc에 추가합니다"
+        "description": "~/.bashrc에 ai, ain 함수를 추가합니다. 'ai'를 입력하면 tmux 세션 생성 → 프로젝트 디렉토리 이동 → Claude Code 실행을 한 번에 처리합니다. 'ain 이름'으로 여러 세션을 병렬 운영할 수도 있습니다. git 동기화는 포함되지 않습니다."
       },
       {
         "label": "ai()/ain() + auto-push",
-        "description": "위 편의 함수에 추가로, Claude Code 종료 시 자동 git push (add→commit→pull→push)를 실행합니다"
+        "description": "위 편의 함수와 동일하지만, Claude Code를 /exit으로 종료할 때 자동으로 git add → commit → pull --rebase → push를 실행합니다. WSL에서 작업한 내용이 GitHub에 자동 push되므로 Windows에서도 최신 상태를 유지할 수 있습니다. 위 '편의 함수'를 포함하므로 둘 다 선택할 필요 없습니다."
       },
       {
-        "label": "Windows 자동 동기화",
-        "description": "Task Scheduler로 30분마다 git pull+push를 실행하여 WSL↔Windows 간 파일을 자동 동기화합니다"
+        "label": "Windows 자동 동기화 (Task Scheduler)",
+        "description": "Windows Task Scheduler에 30분 간격(:00, :30) 자동 작업을 등록합니다. git pull로 WSL/GitHub의 변경사항을 Windows로 가져오고, git push로 Windows 변경사항을 올립니다. WSL과 Windows 양쪽에서 같은 프로젝트를 편집하는 경우에 유용합니다. 한쪽에서만 작업한다면 불필요합니다."
       }
     ]
   }]
