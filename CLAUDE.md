@@ -479,27 +479,100 @@ Core Setup이 완료되면, 편의 기능을 추가로 설정할 수 있습니�
 
 **"네" 선택 시 실행 절차:**
 
-사용자에게 저장소 URL 확인:
+**🤖 10-1. GitHub CLI 설치 확인 (실행):**
+```bash
+wsl -d Ubuntu -- bash -c "gh --version 2>/dev/null"
+```
+- 버전 출력 → 건너뛰기
+- 없으면 → 설치:
+```bash
+wsl -d Ubuntu -- bash -c "sudo apt install -y gh"
+```
+
+**📋 10-2. GitHub 인증 (실행 금지 — AskUserQuestion으로 텍스트만 전달):**
+
+대부분의 프로젝트는 private 저장소이므로, **git clone 전에 먼저 GitHub 인증**이 필요합니다.
+
+```
+[Step 10] GitHub 인증을 먼저 진행합니다.
+
+WSL Ubuntu 터미널에서 아래 명령어를 입력하세요:
+
+   gh auth login
+
+선택지가 순서대로 나타납니다. 아래와 같이 선택하세요:
+
+   ? Where do you use GitHub?  →  GitHub.com  (Enter)
+   ? What is your preferred protocol?  →  HTTPS  (Enter)
+   ? Authenticate Git with your GitHub credentials?  →  Yes  (Enter)
+   ? How would you like to authenticate?  →  Login with a web browser  (Enter)
+
+그러면 화면에 아래처럼 1회용 코드가 표시됩니다:
+
+   ! First copy your one-time code: XXXX-XXXX
+   Press Enter to open github.com in your browser...
+
+여기서 Enter를 누르세요.
+
+⚠️ WSL에서는 브라우저가 자동으로 열리지 않는 경우가 많습니다.
+   브라우저가 안 열리면 아래 순서대로 진행하세요:
+
+   1. 터미널에 표시된 1회용 코드(XXXX-XXXX)를 메모하세요
+   2. Windows에서 직접 브라우저(Chrome, Edge 등)를 열어주세요
+   3. 주소창에 아래 URL을 직접 입력하세요:
+
+      https://github.com/login/device
+
+   4. 메모한 코드를 입력하세요
+   5. "Authorize github" 버튼을 클릭하세요
+   6. WSL 터미널에 "✓ Authentication complete" 메시지가 나오면 성공!
+
+인증이 완료되면 "완료"라고 알려주세요.
+```
+
+**📋 10-3. 저장소 URL 확인 (AskUserQuestion으로 질문):**
 
 ```
 git clone할 저장소 URL을 알려주세요.
 (예: https://github.com/username/my-project.git)
 ```
 
+**🤖 10-4. git clone 실행 (실행):**
+
 저장소 URL을 받으면:
-
+```bash
+wsl -d Ubuntu -- bash -c "cd ~ && gh repo clone {사용자가 준 URL}"
 ```
-WSL Ubuntu 터미널에서 아래 명령어를 실행해주세요:
+- `gh repo clone`은 인증된 상태에서 private 저장소도 자동으로 복제합니다.
+- 실패 시 fallback: `git clone {URL}`
+- 클론된 폴더 이름을 확인하여 기억하세요 (이후 단계에서 사용).
 
-   cd ~ && git clone {사용자가 준 URL}
+**🤖 10-5. teammateMode 재적용 (실행) — CRITICAL:**
 
-GitHub 인증이 필요하면:
+git clone으로 가져온 프로젝트에는 Windows 환경의 `.claude/settings.local.json`이 포함되어 있을 수 있습니다.
+WSL tmux 환경에 맞게 **반드시 teammateMode를 다시 설정**해야 합니다.
 
-   gh auth login
+```bash
+wsl -d Ubuntu -- bash -c "cd ~/{클론된 폴더} && mkdir -p .claude && python3 -c \"
+import json, os
+path = '.claude/settings.local.json'
+d = {}
+if os.path.exists(path):
+    with open(path) as f:
+        d = json.load(f)
+d['teammateMode'] = 'tmux'
+d.setdefault('env', {})['CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS'] = '1'
+with open(path, 'w') as f:
+    json.dump(d, f, indent=2)
+print('teammateMode: tmux 재설정 완료')
+\""
+```
 
-→ GitHub.com → HTTPS → Login with a web browser 선택
+**🤖 10-6. settings.local.json을 .gitignore에 추가 (실행):**
 
-완료되면 "완료"라고 알려주세요.
+환경별 설정이 git으로 덮어씌워지는 것을 방지합니다:
+```bash
+wsl -d Ubuntu -- bash -c "cd ~/{클론된 폴더} && grep -q 'settings.local.json' .gitignore 2>/dev/null || echo '.claude/settings.local.json' >> .gitignore"
 ```
 
 git 사용자 설정 (자동):
@@ -507,6 +580,8 @@ git 사용자 설정 (자동):
 ```bash
 wsl -d Ubuntu -- bash -c "git config --global user.name '{이름}' && git config --global user.email '{이메일}'"
 ```
+
+> **IMPORTANT**: Step 10에서 프로젝트를 클론했다면, 이후 Step 8에서 설정한 경로 대신 **클론된 프로젝트 경로**를 Step 11 이후의 모든 `{프로젝트경로}`로 사용하세요.
 
 ---
 
@@ -519,66 +594,63 @@ wsl -d Ubuntu -- bash -c "grep -q 'Claude Code Agent Teams' ~/.bashrc 2>/dev/nul
 - `installed` 출력 → 사용자에게 "ai()/ain() 편의 함수가 이미 설치되어 있습니다. 건너뛰시겠습니까?" 확인 (재설치 옵션도 제공)
 - 출력 없음 → 아래 진행
 
-사용자에게 아래 **배경 설명**을 먼저 전달한 후 AskUserQuestion을 호출합니다:
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[추가 설정 2/3] 실행 편의 함수
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-현재 Claude Code를 split pane으로 시작하려면 매번 3단계가 필요합니다:
-
-  1. tmux new-session -s claude    ← tmux 세션 만들기
-  2. cd ~/my-project               ← 프로젝트 폴더로 이동
-  3. claude                        ← Claude Code 실행
-
-편의 함수를 설치하면, 이 3단계를 단 하나의 명령어로 줄일 수 있습니다:
-
-  ai          ← 위 3단계를 한 번에 실행!
-  ain 이름    ← 이름을 붙여서 여러 세션을 동시 운영
-
-설치하지 않아도 Agent Teams는 정상 작동합니다.
-단지 매번 3줄을 직접 입력해야 합니다.
-```
+AskUserQuestion을 호출합니다. **question 필드에 배경 설명을 포함**하여 사용자가 맥락을 이해할 수 있게 합니다:
 
 ```json
 {
   "questions": [{
-    "question": "편의 함수(ai/ain)를 설치하시겠습니까?",
+    "question": "[추가 설정 2/3] 실행 편의 함수\n\n현재 Claude Code를 split pane으로 시작하려면 매번 3단계가 필요합니다:\n  1. tmux new-session -s claude\n  2. cd ~/my-project\n  3. claude\n\n편의 함수를 설치하면 한 단어로 줄일 수 있습니다:\n\n  ai  → 위 3단계를 한 번에 실행 (기본 세션)\n  ain → 이름 지정 세션. tmux 안에서도 사용 가능\n        예: ain research → 'research'라는 이름의 새 세션\n        tmux 안이면 새 창(window)으로 열림\n\n설치하지 않아도 Agent Teams는 정상 작동합니다.\n\n편의 함수를 설치하시겠습니까?",
     "header": "편의 함수",
     "multiSelect": false,
     "options": [
       {
         "label": "기본 설치 (Recommended)",
-        "description": "ai, ain 명령어를 추가합니다. Claude Code 시작이 간편해집니다. git 동기화 기능은 포함되지 않습니다."
+        "description": "ai, ain 명령어 추가. Claude Code 종료 후 별도 동작 없음."
       },
       {
         "label": "auto-push 포함 설치",
-        "description": "ai, ain 명령어 + Claude Code 종료 시 자동 git push. 작업 내용이 GitHub에 자동 저장되어, 다른 환경(Windows 등)에서도 최신 상태를 유지합니다."
+        "description": "ai, ain 명령어 + Claude Code 종료 시 자동으로 git add → commit → push. 다른 환경(Windows 등)과 자동 동기화됩니다."
       },
       {
-        "label": "설치하지 않을게요",
-        "description": "매번 tmux → cd → claude를 직접 입력합니다. 나중에 수동 설치도 가능합니다."
+        "label": "설치 안 함",
+        "description": "매번 tmux → cd → claude를 직접 입력. 나중에 수동 설치 가능."
       }
     ]
   }]
 }
 ```
 
-**"기본 설치" 선택 시:**
+**🤖 스크립트 경로 확인 (실행):**
+
+이 레포의 `scripts/setup-bashrc.sh`를 WSL에서 실행해야 합니다.
+Windows 경로를 WSL 마운트 경로로 변환하세요:
+- `C:\path\to\` → `/mnt/c/path/to/`
+- 예: `C:\Users\name\claude-agent-teams-setup\scripts\` → `/mnt/c/Users/name/claude-agent-teams-setup/scripts/`
+
+먼저 스크립트 접근 가능 여부 확인:
 ```bash
-wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프로젝트경로}"
+wsl -d Ubuntu -- ls /mnt/{변환된 경로}/scripts/setup-bashrc.sh
 ```
 
-**"auto-push 포함 설치" 선택 시:**
+**🤖 "기본 설치" 선택 시 (실행):**
+
+`{WSL프로젝트경로}` = Step 8에서 지정한 경로. Step 10에서 프로젝트를 클론했다면 **클론된 경로**를 사용.
+
 ```bash
-wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프로젝트경로}" --with-auto-push
+wsl -d Ubuntu -- bash "/mnt/{변환된 경로}/scripts/setup-bashrc.sh" "{WSL프로젝트경로}"
 ```
 
-설치 확인:
+**🤖 "auto-push 포함 설치" 선택 시 (실행):**
 ```bash
-wsl -d Ubuntu -- bash -c "source ~/.bashrc && type ai 2>/dev/null && echo 'ai() 함수 확인됨'"
+wsl -d Ubuntu -- bash "/mnt/{변환된 경로}/scripts/setup-bashrc.sh" "{WSL프로젝트경로}" --with-auto-push
 ```
+
+**🤖 설치 확인 (실행):**
+```bash
+wsl -d Ubuntu -- bash -c "source ~/.bashrc && echo \"AI_PROJECT_DIR=\$AI_PROJECT_DIR\" && type ai 2>/dev/null && echo 'ai() 함수 확인됨'"
+```
+- `AI_PROJECT_DIR`이 올바른 경로로 표시되는지 확인
+- `AI_PROJECT_DIR`이 비어있으면 `setup-bashrc.sh`에 경로가 제대로 전달되지 않은 것 → 재실행
 
 ---
 
