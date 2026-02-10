@@ -279,49 +279,56 @@ Step 9 완료 후, Part 2 선택 기능 안내로 진행합니다.
 
 ## Part 2: Optional Features (선택)
 
-Core Setup 완료 후, 추가 기능을 **복수선택지(multiSelect)** 로 한 번에 물어봅니다.
+Core Setup이 완료되면, 편의 기능을 추가로 설정할 수 있습니다.
+각 기능은 독립적이며, 필요한 것만 골라서 설치할 수 있습니다.
 
-**CRITICAL**: 사용자가 dontAsk/bypassPermissions 모드를 사용 중이면, Part 2 전체를 건너뛰고 완료 메시지를 표시하세요.
+**CRITICAL**: 사용자가 dontAsk/bypassPermissions 모드를 사용 중이면, Part 2 전체를 건너뛰고 최종 완료 메시지를 표시하세요.
 
-### 선택지 제시 (AskUserQuestion - multiSelect: true)
+---
 
-AskUserQuestion을 **multiSelect: true**로 호출하여 원하는 기능을 복수 선택할 수 있게 합니다:
+### Step 10: 기존 프로젝트 가져오기 (👤 사용자 선택)
+
+사용자에게 아래 **배경 설명**을 먼저 전달한 후 AskUserQuestion을 호출합니다:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[추가 설정 1/3] 프로젝트 가져오기
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+지금 WSL Ubuntu에는 비어 있는 상태입니다.
+
+만약 이미 Windows에서 Claude Code로 작업하던 프로젝트가 있다면,
+그 프로젝트를 WSL에 가져올 수 있습니다.
+
+가져오면 좋은 점:
+- Windows에서 만든 .claude/ 설정(에이전트, 스킬 등)을 WSL에서도 그대로 사용
+- 기존 코드와 CLAUDE.md를 WSL 환경에서 바로 이어서 작업
+
+가져오는 방법은 git clone입니다.
+(GitHub 등에 올려둔 저장소가 있어야 합니다)
+```
 
 ```json
 {
   "questions": [{
-    "question": "추가로 설정할 기능을 선택해주세요. 필요한 것만 골라주세요.",
-    "header": "Optional",
-    "multiSelect": true,
+    "question": "기존 프로젝트를 WSL에 가져오시겠습니까?",
+    "header": "프로젝트",
+    "multiSelect": false,
     "options": [
       {
-        "label": "프로젝트 복제 (git clone)",
-        "description": "기존 git 저장소를 WSL Ubuntu에 clone합니다. Windows에서 사용하던 .claude/ 설정(agents, skills, commands), CLAUDE.md, 코드 등을 그대로 WSL에서 사용할 수 있습니다. 이미 Claude Code 프로젝트가 있는 분에게 권장합니다."
+        "label": "네, git clone으로 가져올게요",
+        "description": "GitHub 등에 올려둔 기존 프로젝트의 URL을 입력하면 WSL Ubuntu에 복제합니다"
       },
       {
-        "label": "ai()/ain() 편의 함수",
-        "description": "~/.bashrc에 ai, ain 함수를 추가합니다. 'ai'를 입력하면 tmux 세션 생성 → 프로젝트 디렉토리 이동 → Claude Code 실행을 한 번에 처리합니다. 'ain 이름'으로 여러 세션을 병렬 운영할 수도 있습니다. git 동기화는 포함되지 않습니다."
-      },
-      {
-        "label": "ai()/ain() + auto-push",
-        "description": "위 편의 함수와 동일하지만, Claude Code를 /exit으로 종료할 때 자동으로 git add → commit → pull --rebase → push를 실행합니다. WSL에서 작업한 내용이 GitHub에 자동 push되므로 Windows에서도 최신 상태를 유지할 수 있습니다. 위 '편의 함수'를 포함하므로 둘 다 선택할 필요 없습니다."
-      },
-      {
-        "label": "Windows 자동 동기화 (Task Scheduler)",
-        "description": "Windows Task Scheduler에 30분 간격(:00, :30) 자동 작업을 등록합니다. git pull로 WSL/GitHub의 변경사항을 Windows로 가져오고, git push로 Windows 변경사항을 올립니다. WSL과 Windows 양쪽에서 같은 프로젝트를 편집하는 경우에 유용합니다. 한쪽에서만 작업한다면 불필요합니다."
+        "label": "아니오, 나중에 할게요",
+        "description": "지금은 건너뛰고 나중에 수동으로 git clone 할 수 있습니다"
       }
     ]
   }]
 }
 ```
 
-사용자가 아무것도 선택하지 않으면(또는 "Other"로 "없음" 입력 시) Part 2를 건너뛰고 최종 완료 메시지로 이동합니다.
-
----
-
-### Option A: 기존 프로젝트 복제 (git clone)
-
-**"프로젝트 복제" 선택 시 실행:**
+**"네" 선택 시 실행 절차:**
 
 사용자에게 저장소 URL 확인:
 
@@ -354,17 +361,61 @@ wsl -d Ubuntu -- bash -c "git config --global user.name '{이름}' && git config
 
 ---
 
-### Option B: ai()/ain() 편의 함수 설치
+### Step 11: 실행 편의 함수 설치 (👤 사용자 선택)
 
-**"ai()/ain() 편의 함수" 또는 "ai()/ain() + auto-push" 선택 시 실행:**
+사용자에게 아래 **배경 설명**을 먼저 전달한 후 AskUserQuestion을 호출합니다:
 
-`scripts/setup-bashrc.sh`를 WSL에서 실행:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[추가 설정 2/3] 실행 편의 함수
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+현재 Claude Code를 split pane으로 시작하려면 매번 3단계가 필요합니다:
+
+  1. tmux new-session -s claude    ← tmux 세션 만들기
+  2. cd ~/my-project               ← 프로젝트 폴더로 이동
+  3. claude                        ← Claude Code 실행
+
+편의 함수를 설치하면, 이 3단계를 단 하나의 명령어로 줄일 수 있습니다:
+
+  ai          ← 위 3단계를 한 번에 실행!
+  ain 이름    ← 이름을 붙여서 여러 세션을 동시 운영
+
+설치하지 않아도 Agent Teams는 정상 작동합니다.
+단지 매번 3줄을 직접 입력해야 합니다.
+```
+
+```json
+{
+  "questions": [{
+    "question": "편의 함수(ai/ain)를 설치하시겠습니까?",
+    "header": "편의 함수",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "기본 설치 (Recommended)",
+        "description": "ai, ain 명령어를 추가합니다. Claude Code 시작이 간편해집니다. git 동기화 기능은 포함되지 않습니다."
+      },
+      {
+        "label": "auto-push 포함 설치",
+        "description": "ai, ain 명령어 + Claude Code 종료 시 자동 git push. 작업 내용이 GitHub에 자동 저장되어, 다른 환경(Windows 등)에서도 최신 상태를 유지합니다."
+      },
+      {
+        "label": "설치하지 않을게요",
+        "description": "매번 tmux → cd → claude를 직접 입력합니다. 나중에 수동 설치도 가능합니다."
+      }
+    ]
+  }]
+}
+```
+
+**"기본 설치" 선택 시:**
 ```bash
-# "ai()/ain() 편의 함수" 선택 시 (auto-push 없음)
 wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프로젝트경로}"
+```
 
-# "ai()/ain() + auto-push" 선택 시
+**"auto-push 포함 설치" 선택 시:**
+```bash
 wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프로젝트경로}" --with-auto-push
 ```
 
@@ -373,13 +424,58 @@ wsl -d Ubuntu -- bash /mnt/{드라이브}/path/to/scripts/setup-bashrc.sh "{프�
 wsl -d Ubuntu -- bash -c "source ~/.bashrc && type ai 2>/dev/null && echo 'ai() 함수 확인됨'"
 ```
 
-> 참고: "ai()/ain() + auto-push"를 선택하면 "ai()/ain() 편의 함수"는 자동 포함됩니다. 둘 다 선택할 필요 없습니다.
-
 ---
 
-### Option C: Windows 자동 동기화 (Task Scheduler)
+### Step 12: Windows ↔ WSL 자동 동기화 (👤 사용자 선택)
 
-**"Windows 자동 동기화" 선택 시 실행:**
+사용자에게 아래 **배경 설명**을 먼저 전달한 후 AskUserQuestion을 호출합니다:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[추가 설정 3/3] Windows ↔ WSL 자동 동기화
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Windows와 WSL Ubuntu는 파일 시스템이 분리되어 있습니다.
+같은 컴퓨터 안이지만, 서로 다른 세계처럼 파일이 별도로 관리됩니다.
+
+  Windows: C:\Users\you\my-project\      ← Windows의 파일
+  WSL:     /home/you/my-project/          ← WSL의 파일 (별도 복사본)
+
+만약 Windows에서도 같은 프로젝트를 열어서 작업하거나 (예: Obsidian, VS Code 등),
+혹은 WSL에서 작업한 결과를 Windows 쪽에서 바로 보고 싶다면,
+양쪽의 파일을 자동으로 맞춰주는 동기화가 필요합니다.
+
+이 기능은 Windows에서 30분마다 자동으로:
+  1. GitHub에서 최신 파일 가져오기 (git pull)
+  2. Windows에서 변경된 파일 올리기 (git push)
+
+를 실행하여 양쪽을 동기화합니다.
+
+⚠️ WSL에서만 작업하고, Windows 쪽에서는 프로젝트를 열지 않는다면
+   이 기능은 필요 없습니다.
+```
+
+```json
+{
+  "questions": [{
+    "question": "Windows ↔ WSL 자동 동기화를 설정하시겠습니까?",
+    "header": "자동 동기화",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "네, 설정할게요",
+        "description": "Windows Task Scheduler에 30분 간격 자동 작업을 등록합니다. Windows에서도 같은 프로젝트를 사용하는 경우 권장합니다."
+      },
+      {
+        "label": "아니오, 필요 없어요",
+        "description": "WSL에서만 작업하거나, 필요할 때 수동으로 git pull/push를 실행합니다."
+      }
+    ]
+  }]
+}
+```
+
+**"네" 선택 시:**
 
 Windows에서의 프로젝트 경로 확인:
 ```
