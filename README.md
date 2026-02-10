@@ -23,7 +23,7 @@ Claude Code의 Agent Teams는 여러 AI 에이전트가 동시에 협업하는 �
 ### Claude Code로 자동 설정 (권장)
 
 ```bash
-git clone https://github.com/treylom/claude-agent-teams-setup.git
+git clone <this-repo-url>
 cd claude-agent-teams-setup
 claude
 # → "설정 시작해줘"라고 입력
@@ -56,7 +56,7 @@ nvm install --lts
 npm install -g @anthropic-ai/claude-code
 claude auth login
 
-# Oh My Tmux
+# Oh My Tmux (선택)
 cd ~ && git clone https://github.com/gpakosz/.tmux.git
 ln -s -f .tmux/.tmux.conf
 cp .tmux/.tmux.conf.local .
@@ -78,27 +78,65 @@ claude
 
 </details>
 
-## 설치 내용
+---
 
-| 구성 요소 | 설명 |
-|-----------|------|
-| WSL2 + Ubuntu | Windows에서 Linux 환경 제공 |
-| tmux | 터미널 분할 (split pane) |
-| Oh My Tmux | tmux 테마 + 마우스 지원 |
-| Node.js (nvm) | Claude Code 실행 환경 |
-| Claude Code CLI | AI 에이전트 실행 |
-| ai()/ain() 함수 | 원클릭 세션 시작 + 자동 git sync |
+## Core Setup (필수)
 
-## 편의 함수
+자동 설치 시 Claude Code가 수행하는 핵심 단계입니다:
 
-설치 후 WSL에서 사용할 수 있는 함수:
+| 단계 | 내용 | 실행 |
+|------|------|------|
+| WSL2 + Ubuntu | Windows에서 Linux 환경 제공 | 사용자 |
+| tmux | 터미널 분할 (split pane) | 자동 |
+| Oh My Tmux | tmux 테마 + 마우스 지원 | 자동 |
+| Node.js (nvm) | Claude Code 실행 환경 | 자동 |
+| Claude Code CLI | AI 에이전트 실행 | 자동 |
+| teammateMode 설정 | split pane 활성화 | 자동 |
 
-```bash
-ai              # tmux + Claude Code 시작 (기본)
-ain my-task     # 이름 지정 세션 시작
-ain             # tmux 안에서 새 창으로 열기
-ai-sync         # 수동 git push
-```
+이것만으로 Agent Teams + split pane이 완전히 작동합니다.
+
+---
+
+## Optional Features (선택)
+
+설치 과정에서 Claude Code가 각 기능을 사용할지 물어봅니다. 필요한 것만 선택하세요.
+
+### 프로젝트 복제 (git clone)
+
+기존 프로젝트(Claude Code 설정, 코드 등)를 WSL 환경으로 가져옵니다.
+
+- **무엇을**: git 저장소를 WSL Ubuntu에 clone
+- **왜**: Windows에서 사용하던 `.claude/` 설정(agents, skills, commands)을 WSL에서도 사용하기 위해
+- **언제 필요**: 이미 Claude Code 프로젝트가 있는 경우
+
+### ai()/ain() 편의 함수
+
+tmux + Claude Code를 한 번에 시작하는 bash 함수입니다.
+
+- **무엇을**: `~/.bashrc`에 `ai`, `ain` 함수 추가
+- **왜**: 매번 `tmux new-session → cd project → claude` 를 입력하지 않아도 됨
+- **사용법**:
+  ```bash
+  ai              # tmux + Claude Code 시작 (기본)
+  ain my-task     # 이름 지정 세션 시작
+  ain             # tmux 안에서 새 창으로 열기
+  ```
+- **auto-push 옵션**: `--with-auto-push` 플래그로 설치하면, Claude Code 종료 시 자동으로 `git add → commit → pull --rebase → push`를 실행합니다.
+
+### Windows 자동 동기화 (Task Scheduler)
+
+Windows에서 주기적으로 git pull + push를 실행하여 WSL과 Windows 간 파일을 자동으로 동기화합니다.
+
+- **무엇을**: Windows Task Scheduler에 30분 간격 자동 실행 작업 등록
+- **왜**: WSL에서 작업한 내용(git push)을 Windows에서 자동으로 받아오고(git pull), Windows에서 변경된 내용도 자동으로 push
+- **동작 흐름**:
+  ```
+  WSL (exit 시) → git push → GitHub → (30분 주기) git pull → Windows
+  Windows (auto-push.ps1) → git push → GitHub → (ai 시작 시) git pull → WSL
+  ```
+- **언제 필요**: Windows와 WSL 양쪽에서 같은 프로젝트를 작업하는 경우
+
+---
 
 ## tmux 키 바인딩
 
@@ -113,7 +151,6 @@ ai-sync         # 수동 git push
 - Windows 10/11
 - 인터넷 연결
 - Anthropic 계정 (Claude Code 인증용)
-- GitHub 계정 (저장소 클론용, 선택)
 
 ## 파일 구조
 
@@ -123,8 +160,8 @@ claude-agent-teams-setup/
 ├── README.md              ← 이 파일
 ├── scripts/
 │   ├── setup-wsl.sh       ← WSL 패키지 자동 설치
-│   ├── setup-bashrc.sh    ← 편의 함수 자동 설치
-│   └── setup-scheduler.ps1← Windows 자동 동기화 설정
+│   ├── setup-bashrc.sh    ← 편의 함수 설치 (선택)
+│   └── setup-scheduler.ps1← Windows 자동 동기화 설정 (선택)
 └── LICENSE
 ```
 
@@ -134,10 +171,13 @@ claude-agent-teams-setup/
 macOS는 기본적으로 tmux를 지원합니다. `brew install tmux`만 하면 됩니다. 이 가이드는 Windows + WSL2 환경 전용입니다.
 
 **Q: VS Code에서 split pane이 안 보여요.**
-VS Code 통합 터미널은 tmux split pane을 지원하지 않습니다. WSL Ubuntu 터미널에서 `ai` 명령어로 실행하세요.
+VS Code 통합 터미널은 tmux split pane을 지원하지 않습니다. WSL Ubuntu 터미널에서 실행하세요.
 
-**Q: 기존 프로젝트 설정을 가져올 수 있나요?**
-네. git clone으로 기존 프로젝트를 WSL에 복사하면 `.claude/` 폴더의 모든 설정(agents, skills, commands)이 자동으로 적용됩니다.
+**Q: 자동 동기화 없이 사용할 수 있나요?**
+네. Core Setup만으로 Agent Teams + split pane이 완전히 작동합니다. 자동 동기화는 Windows와 WSL 양쪽에서 같은 프로젝트를 작업할 때만 필요한 선택 기능입니다.
+
+**Q: 기존 프로젝트를 꼭 가져와야 하나요?**
+아닙니다. 프로젝트 없이도 새 디렉토리에서 Claude Code를 시작할 수 있습니다. 설치 과정에서 프로젝트 경로를 물어볼 때 "없음"이라고 답하면 됩니다.
 
 ## License
 

@@ -1,7 +1,10 @@
-# Claude Code Agent Teams - Windows Task Scheduler 설정
+# Claude Code Agent Teams - Windows Task Scheduler 자동 동기화 설정
 # 사용법: powershell -ExecutionPolicy Bypass -File setup-scheduler.ps1 -RepoPath "C:\path\to\repo"
 #
-# 매 :00, :30에 git pull + add + commit + push 실행
+# 이 스크립트의 역할:
+# - Windows에서 주기적으로 git pull + add + commit + push를 실행합니다
+# - WSL과 Windows 간 파일을 자동으로 동기화하여, 양쪽에서 작업한 내용이 유실되지 않도록 합니다
+# - 기본 간격: 매 :00, :30 (30분마다)
 
 param(
     [Parameter(Mandatory=$true)]
@@ -44,7 +47,9 @@ function Write-Log(`$msg) {
 Set-Location `$repoPath
 
 # Pull first (get WSL changes)
-`$pullResult = git pull origin master --rebase 2>&1
+`$branch = (git branch --show-current 2>&1).Trim()
+if (-not `$branch) { `$branch = "main" }
+`$pullResult = git pull origin `$branch --rebase 2>&1
 if (`$LASTEXITCODE -eq 0) {
     Write-Log "Pull successful"
 } else {
@@ -57,7 +62,7 @@ if (`$status) {
     git add -A
     `$commitMsg = "Auto-sync: `$(Get-Date -Format 'yyyy-MM-dd HH:mm')"
     git commit -m `$commitMsg 2>&1
-    `$pushResult = git push origin master 2>&1
+    `$pushResult = git push origin `$branch 2>&1
     if (`$LASTEXITCODE -eq 0) {
         Write-Log "Push successful: `$commitMsg"
     } else {
@@ -77,7 +82,7 @@ $action = New-ScheduledTaskAction `
     -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`""
 
 $trigger = New-ScheduledTaskTrigger `
-    -Once -At '2026-01-01T00:00:00' `
+    -Once -At (Get-Date).Date `
     -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes)
 
 $settings = New-ScheduledTaskSettingsSet `
