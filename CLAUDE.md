@@ -296,14 +296,20 @@ wsl -d Ubuntu -- bash -c "test -d ~/.tmux && echo 'installed'"
 - `installed` 출력 → **건너뛰기** ✅
 - 출력 없음 → 아래 진행
 
-**🤖 설치 (실행):**
+**🤖 설치 (실행) — 각 명령어를 순서대로 실행:**
 ```bash
-wsl -d Ubuntu -- bash -c "cd ~ && git clone https://github.com/gpakosz/.tmux.git 2>/dev/null; ln -s -f .tmux/.tmux.conf; cp .tmux/.tmux.conf.local . 2>/dev/null; echo 'Oh My Tmux 설치 완료'"
+wsl -d Ubuntu -- bash -c "cd ~ && git clone https://github.com/gpakosz/.tmux.git"
+```
+```bash
+wsl -d Ubuntu -- bash -c "ln -s -f ~/.tmux/.tmux.conf ~/.tmux.conf"
+```
+```bash
+wsl -d Ubuntu -- bash -c "cp ~/.tmux/.tmux.conf.local ~/"
 ```
 
 **🤖 마우스 지원 활성화 (실행):**
 ```bash
-wsl -d Ubuntu -- bash -c "sed -i 's/#set -g mouse on/set -g mouse on/' ~/.tmux.conf.local 2>/dev/null"
+wsl -d Ubuntu -- bash -c "grep -q '^set -g mouse on' ~/.tmux.conf.local || sed -i 's/#set -g mouse on/set -g mouse on/' ~/.tmux.conf.local"
 ```
 
 ---
