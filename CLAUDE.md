@@ -21,7 +21,7 @@
 | `🤖 실행:` 뒤의 bash 블록 | Claude Code가 직접 실행할 명령어 | Bash 도구로 실행 |
 | `📋 사용자에게 전달:` 뒤의 텍스트 블록 | 사용자에게 보여줄 안내문 | AskUserQuestion으로 텍스트 전달만. **절대 실행하지 마세요** |
 
-**⚠️ "📋 사용자에게 전달:" 블록 안의 명령어(wsl --install, claude auth login 등)는 사용자가 직접 입력할 명령어입니다. Claude Code가 실행하면 안 됩니다.**
+**⚠️ "📋 사용자에게 전달:" 블록 안의 명령어(wsl --install, 로그인용 claude 실행 등)는 사용자가 직접 입력할 명령어입니다. Claude Code가 실행하면 안 됩니다.**
 
 ### 안내 메시지 톤
 - 한국어 존댓말, 친근하고 명확
@@ -55,11 +55,11 @@ wsl -d Ubuntu -- echo "ok" 2>/dev/null
 # 4. 기본 패키지 확인 (Ubuntu가 있을 때만)
 wsl -d Ubuntu -- bash -c "tmux -V 2>/dev/null; git --version 2>/dev/null; curl --version 2>/dev/null | head -1"
 
-# 5. Node.js 확인
-wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" 2>/dev/null; node --version 2>/dev/null"
+# 5. Claude Code 확인 (네이티브 설치 = ~/.local/bin/claude)
+wsl -d Ubuntu -- bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\"; claude --version 2>/dev/null"
 
-# 6. Claude Code 확인
-wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" 2>/dev/null; claude --version 2>/dev/null"
+# 6. Node.js 확인 (선택 — Claude Code엔 불필요)
+wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" 2>/dev/null; node --version 2>/dev/null"
 
 # 7. Oh My Tmux 확인
 wsl -d Ubuntu -- bash -c "test -d ~/.tmux && echo 'installed' || echo 'not found'"
@@ -77,8 +77,8 @@ wsl -d Ubuntu -- bash -c "cat ~/.claude/settings.local.json 2>/dev/null || find 
   Ubuntu:        ✅ 설치됨 / ❌ 미설치
   tmux:          ✅ x.x / ❌ 미설치
   git:           ✅ x.x / ❌ 미설치
-  Node.js:       ✅ vXX.x.x / ❌ 미설치
-  Claude Code:   ✅ x.x.x / ❌ 미설치
+  Claude Code:   ✅ x.x.x / ❌ 미설치  (네이티브 설치, Node.js 불필요)
+  Node.js:       ✅ vXX.x.x / ⏭️ 선택 (Claude Code엔 불필요)
   Oh My Tmux:    ✅ 설치됨 / ❌ 미설치
   teammateMode:  ✅ tmux / ❌ 미설정
 
@@ -196,24 +196,52 @@ wsl -d Ubuntu -- bash -c "tmux -V && git --version"
 
 ---
 
-### Step 4: nvm + Node.js 설치 (🤖 자동 + 👤 터미널 재시작)
+### Step 4: Claude Code 설치 (🤖 자동 — 네이티브, Node.js 불필요)
+
+Claude Code는 **네이티브 설치기**로 설치합니다. 단일 바이너리를 `~/.local/bin/claude`에 설치하며 **Node.js가 필요 없습니다** (백그라운드 자동 업데이트 포함). 옛 npm 방식(`npm install -g @anthropic-ai/claude-code`)은 Node.js가 필요했지만 더 이상 권장하지 않습니다.
+
+**🤖 환경 감지 (실행):**
+```bash
+wsl -d Ubuntu -- bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\"; claude --version 2>/dev/null"
+```
+- 버전 출력 → **건너뛰기** ✅
+- 에러 또는 출력 없음 → 아래 진행
+
+**🤖 설치 (실행 — 네이티브 설치기):**
+```bash
+wsl -d Ubuntu -- bash -c "curl -fsSL https://claude.ai/install.sh | bash"
+```
+
+**🤖 설치 확인 (실행 — PATH에 ~/.local/bin 추가):**
+```bash
+wsl -d Ubuntu -- bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\"; claude --version && claude doctor 2>/dev/null | head -5"
+```
+
+- 네이티브 설치기는 `claude` 바이너리를 `~/.local/bin`에 두고, 셸 rc 파일에 PATH 추가를 시도합니다.
+- 새 터미널에서 `claude`가 안 잡히면 `~/.bashrc`에 `export PATH="$HOME/.local/bin:$PATH"`를 추가하라고 안내하세요.
+
+---
+
+### Step 5: (선택) nvm + Node.js 설치 (🤖 자동 — Claude Code엔 불필요)
+
+**Claude Code 네이티브 설치는 Node.js가 필요 없습니다.** 이 단계는 사용자가 별도의 Node 기반 도구(프로젝트 빌드 도구 등)를 쓸 때만 필요한 선택 단계입니다. 필요 없으면 건너뛰어도 Agent Teams + split pane은 완전히 작동합니다.
 
 **🤖 환경 감지 (실행):**
 ```bash
 wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" 2>/dev/null; node --version 2>/dev/null"
 ```
 - 버전 출력 (예: `v20.x.x`) → **건너뛰기** ✅
-- 에러 또는 출력 없음 → 아래 진행
+- 에러 또는 출력 없음 → (Node가 필요한 경우에만) 아래 진행
 
-**🤖 4-1. nvm 설치 (실행):**
+**🤖 5-1. nvm 설치 (실행):**
 ```bash
-wsl -d Ubuntu -- bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
+wsl -d Ubuntu -- bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash"
 ```
 
-**📋 4-2. 터미널 재시작 안내 (실행 금지 — AskUserQuestion으로 텍스트만 전달):**
+**📋 5-2. 터미널 재시작 안내 (실행 금지 — AskUserQuestion으로 텍스트만 전달):**
 
 ```
-[Step 4/9] nvm 설치가 완료되었습니다!
+[Step 5/9] nvm 설치가 완료되었습니다!
 
 nvm을 사용하려면 터미널을 재시작해야 합니다.
 하지만 걱정 마세요 - 제가 다른 방법으로 계속 진행하겠습니다.
@@ -221,68 +249,53 @@ nvm을 사용하려면 터미널을 재시작해야 합니다.
 (아무 것도 하지 않으셔도 됩니다. "계속"을 눌러주세요)
 ```
 
-**🤖 4-3. Node.js 설치 (실행 - nvm 경로 직접 지정):**
+**🤖 5-3. Node.js 설치 (실행 - nvm 경로 직접 지정):**
 ```bash
 wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" && nvm install --lts && node --version"
 ```
 
 ---
 
-### Step 5: Claude Code 설치 (🤖 자동)
+### Step 6: Claude Code 로그인 (👤 사용자 조작 필요)
 
 **🤖 환경 감지 (실행):**
 ```bash
-wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" 2>/dev/null; claude --version 2>/dev/null"
+wsl -d Ubuntu -- bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\"; test -f ~/.claude/.credentials.json && echo 'LOGGED_IN' || echo 'NOT_LOGGED_IN'"
 ```
-- 버전 출력 → **건너뛰기** ✅
-- 에러 또는 출력 없음 → 아래 진행
+- `LOGGED_IN` 출력 → **건너뛰기** ✅ (이미 로그인됨)
+- `NOT_LOGGED_IN` → 아래 진행
 
-**🤖 설치 (실행):**
-```bash
-wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" && npm install -g @anthropic-ai/claude-code && claude --version"
-```
-
----
-
-### Step 6: Claude Code 인증 (👤 사용자 조작 필요)
-
-**🤖 환경 감지 (실행):**
-```bash
-wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" 2>/dev/null; claude auth status 2>/dev/null"
-```
-- 인증 정보가 표시되면 (계정 이메일 등) → **건너뛰기** ✅
-- 미인증 또는 에러 → 아래 진행
-
-**이 단계는 브라우저 인증이 필요합니다. Claude Code가 직접 실행할 수 없습니다.**
+**이 단계는 브라우저 로그인이 필요합니다. Claude Code가 직접 실행할 수 없습니다.**
 
 **📋 사용자에게 전달 (실행 금지 — AskUserQuestion으로 텍스트만 전달):**
 
 ```
-[Step 6/9] Claude Code 인증이 필요합니다.
+[Step 6/9] Claude Code 로그인이 필요합니다.
+(Claude Pro / Max / Team / Enterprise 계정이 필요합니다 — 무료 플랜은 사용할 수 없습니다)
 
 WSL Ubuntu 터미널을 열고 아래 순서대로 진행해주세요:
 
 1. Ubuntu 터미널에서 아래 명령어를 입력하고 Enter:
 
-   claude auth login
+   claude
 
-2. 선택지가 나타나면 → 1번 옵션을 선택하세요 (키보드 1 또는 Enter)
-
-3. 이후 두 가지 경우가 있습니다:
+2. 첫 실행 시 자동으로 로그인 안내가 나타납니다. 이후 두 가지 경우가 있습니다:
 
    [경우 A] 브라우저가 자동으로 열리는 경우:
-   → Anthropic 계정으로 로그인하세요
-   → "인증 완료" 메시지가 나오면 성공입니다
+   → Claude.ai 계정으로 로그인하세요
+   → 로그인 후 터미널로 돌아오면 성공입니다
 
-   [경우 B] 브라우저가 자동으로 안 열리는 경우:
-   → 터미널에 URL이 표시됩니다 (https://... 형태)
-   → 그 URL을 마우스로 드래그하여 복사하세요 (Ctrl+Shift+C)
+   [경우 B] 브라우저가 자동으로 안 열리는 경우 (WSL2에서 흔합니다):
+   → 터미널에서 c 키를 누르면 로그인 URL이 복사됩니다
    → Windows 브라우저(Chrome, Edge 등)를 열고 주소창에 붙여넣기(Ctrl+V) 후 Enter
-   → Anthropic 계정으로 로그인하세요
+   → 로그인 후 "코드"가 표시되면, 그 코드를 복사해
+     터미널의 "Paste code here if prompted" 부분에 붙여넣으세요
+     (WSL2·SSH·컨테이너에서는 로컬 콜백이 막혀 코드 입력 방식이 자주 쓰입니다)
 
-4. 인증이 완료되면 "완료"라고 알려주세요
+3. 로그인이 완료되면 "완료"라고 알려주세요
 
 (Ubuntu 터미널 여는 법: 시작 메뉴에서 "Ubuntu" 검색 후 클릭)
+(로그아웃·전환은 Claude Code 안에서 /logout, 상태 확인은 /status)
 ```
 
 ---
@@ -388,11 +401,14 @@ print('teammateMode: tmux 설정 완료')
 # tmux 확인
 wsl -d Ubuntu -- bash -c "tmux -V"
 
-# Node.js 확인
-wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" && node --version"
+# Oh My Tmux 확인
+wsl -d Ubuntu -- bash -c "test -d ~/.tmux && echo 'Oh My Tmux: 설치됨' || echo 'Oh My Tmux: 미설치'"
 
-# Claude Code 확인
-wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" && claude --version"
+# Claude Code 확인 (네이티브 = ~/.local/bin/claude)
+wsl -d Ubuntu -- bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\"; claude --version"
+
+# (선택) Node.js 확인 — Claude Code엔 불필요
+wsl -d Ubuntu -- bash -c "export NVM_DIR=\"\$HOME/.nvm\" && [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" 2>/dev/null; node --version 2>/dev/null || echo '(Node.js 미설치 — 선택 사항이라 정상)'"
 
 # teammateMode 확인
 wsl -d Ubuntu -- bash -c "cd {프로젝트경로} && cat .claude/settings.local.json | python3 -c 'import sys,json; d=json.load(sys.stdin); print(\"teammateMode:\", d.get(\"teammateMode\",\"없음\"))'"
@@ -405,7 +421,7 @@ Core Setup이 완료되었습니다!
 
 ✅ WSL2 + Ubuntu
 ✅ tmux + Oh My Tmux
-✅ Node.js + Claude Code
+✅ Claude Code (네이티브 설치, Node.js 불필요)
 ✅ teammateMode: tmux (split pane 활성화)
 
 🚀 기본 사용 방법:
@@ -735,7 +751,7 @@ powershell -ExecutionPolicy Bypass -File "scripts/setup-scheduler.ps1" -RepoPath
 ✅ Core:
   - WSL2 + Ubuntu
   - tmux + Oh My Tmux
-  - Node.js + Claude Code
+  - Claude Code (네이티브 설치, Node.js 불필요)
   - teammateMode: tmux (split pane 활성화)
 
 {Option A 설치 시}
@@ -762,8 +778,15 @@ powershell -ExecutionPolicy Bypass -File "scripts/setup-scheduler.ps1" -RepoPath
 
 ## 트러블슈팅
 
+### "claude: command not found" (네이티브 설치 후)
+네이티브 설치기는 `claude` 바이너리를 `~/.local/bin`에 둡니다. 이 경로가 PATH에 없으면 새 셸에서 못 찾습니다. 새 터미널을 열어보고, 그래도 안 되면 `~/.bashrc`에 아래를 추가 후 `source ~/.bashrc`:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+설치·구성 상태 점검은 `claude doctor`로 확인할 수 있습니다.
+
 ### "nvm: command not found"
-Ubuntu 터미널을 완전히 닫고 다시 열어주세요. `source ~/.bashrc`로는 안 될 수 있습니다.
+nvm/Node.js는 **선택 사항**이며 Claude Code 동작엔 영향이 없습니다. Node가 필요하면 Ubuntu 터미널을 완전히 닫고 다시 열어주세요. `source ~/.bashrc`로는 안 될 수 있습니다.
 
 ### "sessions should be nested with care"
 tmux 안에서 `ai`를 실행하면 발생합니다. 대신 `ain 세션이름`을 사용하세요.

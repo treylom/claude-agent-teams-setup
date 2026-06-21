@@ -47,14 +47,15 @@ wsl --install
 # 기본 패키지
 sudo apt update && sudo apt install -y tmux git curl
 
-# Node.js (nvm)
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+# Claude Code (네이티브 설치 — Node.js 불필요, 권장)
+curl -fsSL https://claude.ai/install.sh | bash
+# 새 터미널을 열거나 source ~/.bashrc 후:
+claude            # 실행하면 브라우저 안내로 로그인
+
+# (선택) Node.js — Claude Code엔 불필요. Node 기반 도구가 필요할 때만:
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
 # 터미널 재시작 후:
 nvm install --lts
-
-# Claude Code
-npm install -g @anthropic-ai/claude-code
-claude auth login
 
 # Oh My Tmux (선택)
 cd ~ && git clone https://github.com/gpakosz/.tmux.git
@@ -89,8 +90,8 @@ claude
 | WSL2 + Ubuntu | Windows에서 Linux 환경 제공 | 사용자 |
 | tmux | 터미널 분할 (split pane) | 자동 |
 | Oh My Tmux | tmux 테마 + 마우스 지원 | 자동 |
-| Node.js (nvm) | Claude Code 실행 환경 | 자동 |
-| Claude Code CLI | AI 에이전트 실행 | 자동 |
+| Claude Code CLI | AI 에이전트 실행 (네이티브 설치, Node.js 불필요) | 자동 |
+| Node.js (nvm) | (선택) Claude Code엔 불필요 · Node 도구용 | 자동 시도(선택·실패해도 무시) |
 | teammateMode 설정 | split pane 활성화 | 자동 |
 
 이것만으로 Agent Teams + split pane이 완전히 작동합니다.
